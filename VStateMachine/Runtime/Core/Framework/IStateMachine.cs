@@ -21,6 +21,11 @@ namespace VStateMachine.Runtime.Core.Framework
 		IStateConnectionContext StateConnectionContext { get; }
 
 		/// <summary>
+		/// <see cref="IStateMachineOwner"/>'s Owner's Ref..........
+		/// </summary>
+		IStateMachineOwner StateMachineOwner { get; }
+
+		/// <summary>
 		/// <see cref="RunWith{TState}"/> Will Set Active <see cref="IState"/>
 		/// & KickOf This <see cref="IStateMachine"/> & Set <see cref="IsRunning"/> To True..
 		/// </summary>
@@ -60,11 +65,5 @@ namespace VStateMachine.Runtime.Core.Framework
 		/// <see cref="Shutdown"/> & Reset Private States Of <see cref="IStateMachine"/>
 		/// </summary>
 		void Shutdown();
-
-		/// <summary>
-		/// Set Logging Status For Current <see cref="IStateMachine"/>
-		/// </summary>
-		/// <param name="canLog"></param>
-		void SetLogging(bool canLog);
 	}
 }

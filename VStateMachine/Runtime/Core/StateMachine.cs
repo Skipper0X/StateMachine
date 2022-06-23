@@ -8,7 +8,7 @@ namespace VStateMachine.Runtime.Core
 	/// <inheritdoc cref="IStateMachine"/>
 	public sealed class StateMachine : IStateMachine
 	{
-		private bool _canLog = false;
+		private bool _logging = false;
 		private IStateConnectionSet _currentStateConnectionSet = null;
 		private readonly Dictionary<Type, IState> _statesRegistry = new Dictionary<Type, IState>();
 
@@ -30,14 +30,21 @@ namespace VStateMachine.Runtime.Core
 		public IStateConnectionContext StateConnectionContext { get; } = new StateConnectionContext();
 
 		/// <summary>
+		/// <see cref="IStateMachineOwner"/>'s Owner's Ref..........
+		/// </summary>
+		public IStateMachineOwner StateMachineOwner { get; private set; } = null;
+
+		/// <summary>
 		/// <see cref="IStateMachine.RunWith{TState}"/> Will Set Active <see cref="IState"/>
 		/// & KickOf This <see cref="IStateMachine"/> & Set <see cref="IStateMachine.IsRunning"/> To True..
 		/// </summary>
 		/// <typeparam name="TState"></typeparam>
 		public void RunWith<TState>() where TState : IState
 		{
-			SwitchState<TState>();
+			if (IsRunning) return;
 			IsRunning = true;
+
+			SwitchState<TState>();
 		}
 
 		/// <summary>
@@ -97,12 +104,6 @@ namespace VStateMachine.Runtime.Core
 			StateConnectionContext.OnReset();
 		}
 
-		/// <summary>
-		/// Set Logging Status For Current <see cref="IStateMachine"/>
-		/// </summary>
-		/// <param name="canLog"></param>
-		public void SetLogging(bool canLog) => _canLog = canLog;
-
 		/////////////////////////////////////////////////////////////////////////////////////////////////////
 		private void CheckIfAnyStateConnectionIsReady()
 		{
@@ -115,6 +116,8 @@ namespace VStateMachine.Runtime.Core
 
 		private void SwitchStateLogic(Type stateType)
 		{
+			if (IsRunning == false) return;
+
 			if (CurrentState != null)
 			{
 				CurrentState.OnExit();
@@ -135,13 +138,30 @@ namespace VStateMachine.Runtime.Core
 				$"StateMachineException: {stateType.Name} Is Not Found. Check StateRegistry Of StateMachine!");
 		}
 
+		private void SetLogging(bool canLog) => _logging = canLog;
+		private void SetOwner(IStateMachineOwner owner) => StateMachineOwner = owner;
 		private bool HasStateInRegistry(Type stateType) => _statesRegistry.ContainsKey(stateType);
 
 		/////////////////////////////////////////////////////////////////////////////////////////////////////
 		private void LogInfo(string info)
 		{
-			if (_canLog == false) return;
-			Debug.Log($"StateMachine --> {info}");
+			if (_logging == false) return;
+			var ownerName = StateMachineOwner != null ? StateMachineOwner.GetName() : "UnKnown";
+			Debug.Log($"{ownerName} -> StateMachine :: {info}");
+		}
+
+		/// <summary>
+		/// Create A new <see cref="StateMachine"/>'s Object & Returns It's Contract <see cref="IStateMachine"/>
+		/// </summary>
+		/// <param name="logging">Set If <see cref="IStateMachine"/> Can Log...</param>
+		/// <param name="stateMachineOwner"></param>
+		/// <returns></returns>
+		public static IStateMachine Create(bool logging = false, IStateMachineOwner stateMachineOwner = null)
+		{
+			var stateMachine = new StateMachine();
+			stateMachine.SetOwner(stateMachineOwner);
+			stateMachine.SetLogging(logging);
+			return stateMachine;
 		}
 	}
 }
